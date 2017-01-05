@@ -1,8 +1,10 @@
 package fasttrack.jdeveloper.popularmoviesapp.views;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -12,7 +14,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.Toast;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import fasttrack.jdeveloper.popularmoviesapp.R;
@@ -34,7 +38,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String MOVIE = "MOVIE";
     private ArrayList<Movie> movies = new ArrayList<>();
     private MoviesWrapper moviesWrapper;
-    private RecyclerView mMoviesRecylerView;
     private MoviesAdapter moviesAdapter;
     private EndlessRecyclerViewScrollListener scrollListener;
     private Boolean popularMovies = true;
@@ -84,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void initRecyclerView() {
-        mMoviesRecylerView = (RecyclerView) findViewById(R.id.rv_movies);
+        RecyclerView mMoviesRecylerView = (RecyclerView) findViewById(R.id.rv_movies);
         StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
         mMoviesRecylerView.setLayoutManager(gridLayoutManager);
         moviesAdapter = new MoviesAdapter(movies, this);
@@ -99,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void loadNextDataFromApi() {
-        if (popularMovies) {
+        if (getString(R.string.most_popular).equals(spinner.getSelectedItem())) {
             getPopularMovies(moviesWrapper.getPage() + 1);
         }
         else {
@@ -125,36 +128,85 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void getPopularMovies(final int page) {
+        if (Globals.IMAGE_POSTER_SIZE == null || Globals.IMAGE_POSTER_SIZE.isEmpty()) {
+            getMovieConfiguration();
+        }
         final MovieDBApi movieDBApi = new MovieDBApi();
         Call<MoviesWrapper> call = movieDBApi.apiInterface.getPopularMovies(page);
         call.enqueue(new Callback<MoviesWrapper>() {
             @Override
             public void onResponse(Call<MoviesWrapper> call, Response<MoviesWrapper> response) {
-                moviesWrapper = response.body();
-                updateMovieList(page);
+                if (response.isSuccessful()) {
+                    moviesWrapper = response.body();
+                    updateMovieList(page);
+                    popularMovies = true;
+                }
             }
 
             @Override
             public void onFailure(Call<MoviesWrapper> call, Throwable t) {
+                if (t instanceof UnknownHostException) {
+                    showErrorNetworkDialog();
+                }
             }
         });
     }
 
     private void getBestRatedMovies(final int page) {
+        if (Globals.IMAGE_POSTER_SIZE == null || Globals.IMAGE_POSTER_SIZE.isEmpty()) {
+            getMovieConfiguration();
+        }
         final MovieDBApi movieDBApi = new MovieDBApi();
         Call<MoviesWrapper> call = movieDBApi.apiInterface.getBestRatedMovies(page);
         call.enqueue(new Callback<MoviesWrapper>() {
             @Override
             public void onResponse(Call<MoviesWrapper> call, Response<MoviesWrapper> response) {
-                moviesWrapper = response.body();
-                updateMovieList(page);
+                if (response.isSuccessful()) {
+                    moviesWrapper = response.body();
+                    updateMovieList(page);
+                    popularMovies = false;
+                }
             }
 
             @Override
             public void onFailure(Call<MoviesWrapper> call, Throwable t) {
-
+                if (t instanceof UnknownHostException) {
+                    showErrorNetworkDialog();
+                }
             }
         });
+    }
+
+    private void showErrorNetworkDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+        builder.setTitle(getString(R.string.no_internet));
+        builder.setMessage(getString(R.string.no_internet_body));
+
+        builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                finish();
+            }
+        });
+
+        builder.setPositiveButton(getString(R.string.retry), new DialogInterface.OnClickListener(){
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                dialog.dismiss();
+                if (getString(R.string.most_popular).equals(spinner.getSelectedItem())) {
+                    getPopularMovies(1);
+                }
+                else {
+                    getBestRatedMovies(1);
+                }
+            }
+        });
+        AlertDialog dialog = builder.create(); // calling builder.create after adding buttons
+        dialog.show();
+        Toast.makeText(this, getString(R.string.network_unavailable), Toast.LENGTH_SHORT).show();
     }
 
     private void updateMovieList(int page) {
@@ -173,11 +225,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         if (getString(R.string.most_popular).equals(adapterView.getItemAtPosition(i))) {
             getPopularMovies(1);
-            popularMovies = true;
         }
         else {
             getBestRatedMovies(1);
-            popularMovies = false;
         }
     }
 

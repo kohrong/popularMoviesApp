@@ -25,7 +25,7 @@ import retrofit2.http.Query;
 public class MovieDBApi {
 
     public static final String BASE_URL = "https://api.themoviedb.org/3/";
-    private static final String apikey = "put your apikey here";
+    private static final String apikey = "insert your apikey here";
 
     OkHttpClient defaultHttpClient = new OkHttpClient.Builder()
             .addInterceptor(

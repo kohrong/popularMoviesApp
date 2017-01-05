@@ -4,6 +4,12 @@
     <string name="most_popular">Most popular</string>
     <string name="best_rated">Best rated</string>
     <string name="total_average"> /10</string>
+    <string name="release_date">Release date:</string>
+    <string name="no_internet">No Internet</string>
+    <string name="no_internet_body">Internet is required. Please Retry.</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    <string name="network_unavailable">Network Unavailable!</string>
 
     <string-array name="movies_sorting_options">
         <item>@string/most_popular</item>

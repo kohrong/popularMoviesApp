@@ -2,6 +2,7 @@ package fasttrack.jdeveloper.popularmoviesapp.views.activities;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -28,6 +29,9 @@ public class MovieDetailActivity extends AppCompatActivity {
             movie = (Movie) getIntent().getSerializableExtra(MOVIE);
         }
 
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         title = (TextView) findViewById(R.id.tv_movie_title);
         average = (TextView) findViewById(R.id.tv_movie_average);
         releaseDate = (TextView) findViewById(R.id.tv_movie_release_date);
@@ -49,5 +53,14 @@ public class MovieDetailActivity extends AppCompatActivity {
                     .error(R.drawable.rectangle)
                     .into(poster);
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
