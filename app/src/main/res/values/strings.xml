@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">PopularMoviesApp</string>
+    <string name="sorted_movies">Sorted movies</string>
+    <string name="most_popular">Most popular</string>
+    <string name="best_rated">Best rated</string>
+    <string name="total_average"> /10</string>
+
+    <string-array name="movies_sorting_options">
+        <item>@string/most_popular</item>
+        <item>@string/best_rated</item>
+    </string-array>
 </resources>
