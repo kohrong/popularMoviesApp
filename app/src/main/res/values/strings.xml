@@ -10,9 +10,12 @@
     <string name="cancel">Cancel</string>
     <string name="retry">Retry</string>
     <string name="network_unavailable">Network Unavailable!</string>
+    <string name="favorites">Favorites</string>
+    <string name="favorite">Favorite</string>
 
     <string-array name="movies_sorting_options">
         <item>@string/most_popular</item>
         <item>@string/best_rated</item>
+        <item>@string/favorites</item>
     </string-array>
 </resources>

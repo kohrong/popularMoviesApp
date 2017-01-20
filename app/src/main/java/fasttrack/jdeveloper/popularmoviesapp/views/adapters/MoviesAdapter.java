@@ -11,6 +11,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import fasttrack.jdeveloper.popularmoviesapp.R;
 import fasttrack.jdeveloper.popularmoviesapp.models.Globals;
 import fasttrack.jdeveloper.popularmoviesapp.models.Movie;
@@ -37,9 +39,8 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
         boolean shouldAttachToParentImmediately = false;
 
         View view = inflater.inflate(layoutIdForListItem, parent, shouldAttachToParentImmediately);
-        MoviesViewHolder viewHolder = new MoviesViewHolder(view);
 
-        return viewHolder;
+        return new MoviesViewHolder(view);
     }
 
     @Override
@@ -59,11 +60,11 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
 
     class MoviesViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        private ImageView moviePoster;
+        @BindView(R.id.iv_movie_poster) ImageView moviePoster;
 
         public MoviesViewHolder(View itemView) {
             super(itemView);
-            this.moviePoster = (ImageView) itemView.findViewById(R.id.iv_movie_poster);
+            ButterKnife.bind(this, itemView);
             itemView.setOnClickListener(this);
         }
 

@@ -1,5 +1,6 @@
 package fasttrack.jdeveloper.popularmoviesapp.models;
 
+import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.io.Serializable;
@@ -9,7 +10,7 @@ import java.util.ArrayList;
  * Created by jdeveloper on 2/1/17.
  */
 
-public class Movie implements Serializable{
+public class Movie implements Parcelable {
 
     private String poster_path;
     private Boolean adult;
@@ -154,4 +155,57 @@ public class Movie implements Serializable{
     public void setVote_average(Double vote_average) {
         this.vote_average = vote_average;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.poster_path);
+        dest.writeValue(this.adult);
+        dest.writeString(this.overview);
+        dest.writeString(this.release_date);
+        dest.writeList(this.genre_ids);
+        dest.writeValue(this.id);
+        dest.writeString(this.original_title);
+        dest.writeString(this.original_language);
+        dest.writeString(this.title);
+        dest.writeString(this.backdrop_path);
+        dest.writeValue(this.popularity);
+        dest.writeValue(this.vote_count);
+        dest.writeValue(this.video);
+        dest.writeValue(this.vote_average);
+    }
+
+    protected Movie(Parcel in) {
+        this.poster_path = in.readString();
+        this.adult = (Boolean) in.readValue(Boolean.class.getClassLoader());
+        this.overview = in.readString();
+        this.release_date = in.readString();
+        this.genre_ids = new ArrayList<>();
+        in.readList(this.genre_ids, Integer.class.getClassLoader());
+        this.id = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.original_title = in.readString();
+        this.original_language = in.readString();
+        this.title = in.readString();
+        this.backdrop_path = in.readString();
+        this.popularity = (Double) in.readValue(Double.class.getClassLoader());
+        this.vote_count = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.video = (Boolean) in.readValue(Boolean.class.getClassLoader());
+        this.vote_average = (Double) in.readValue(Double.class.getClassLoader());
+    }
+
+    public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
+        @Override
+        public Movie createFromParcel(Parcel source) {
+            return new Movie(source);
+        }
+
+        @Override
+        public Movie[] newArray(int size) {
+            return new Movie[size];
+        }
+    };
 }

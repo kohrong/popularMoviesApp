@@ -2,12 +2,15 @@ package fasttrack.jdeveloper.popularmoviesapp.views.activities;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import fasttrack.jdeveloper.popularmoviesapp.R;
 import fasttrack.jdeveloper.popularmoviesapp.models.Globals;
 import fasttrack.jdeveloper.popularmoviesapp.models.Movie;
@@ -16,27 +19,26 @@ public class MovieDetailActivity extends AppCompatActivity {
 
     private static final String MOVIE = "MOVIE";
     private Movie movie;
-    private TextView title, average, releaseDate, synopsis;
-    private ImageView poster;
+    @BindView(R.id.tv_movie_title) TextView title;
+    @BindView(R.id.tv_movie_average) TextView average;
+    @BindView(R.id.tv_movie_release_date) TextView releaseDate;
+    @BindView(R.id.tv_movie_synopsis) TextView synopsis;
+    @BindView(R.id.iv_movie_poster) ImageView poster;
+    private Boolean isFavoriteMovie = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_detail);
+        ButterKnife.bind(this);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            movie = (Movie) getIntent().getSerializableExtra(MOVIE);
+            movie = getIntent().getParcelableExtra(MOVIE);
         }
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        title = (TextView) findViewById(R.id.tv_movie_title);
-        average = (TextView) findViewById(R.id.tv_movie_average);
-        releaseDate = (TextView) findViewById(R.id.tv_movie_release_date);
-        synopsis = (TextView) findViewById(R.id.tv_movie_synopsis);
-        poster = (ImageView) findViewById(R.id.iv_movie_poster);
 
         title.setText(movie.getOriginal_title());
         average.setText(String.valueOf(movie.getVote_average()));
@@ -60,7 +62,33 @@ public class MovieDetailActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
+                break;
+            case R.id.action_favorite:
+                toggleFavoriteIcon(item);
+                //TODO insert or remove the movie from the database based on current value of isFavoriteMovie
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void toggleFavoriteIcon(MenuItem item) {
+        if (isFavoriteMovie) {
+            item.setIcon(R.mipmap.ic_fav_unfilled);
+            isFavoriteMovie = false;
+        } else {
+            item.setIcon(R.mipmap.ic_fav_filled);
+            isFavoriteMovie = true;
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.movie_detail_menu, menu);
+        setFavoriteIcon(menu.findItem(R.id.action_favorite));
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    private void setFavoriteIcon(MenuItem item) {
+        item.setIcon(isFavoriteMovie ? R.mipmap.ic_fav_filled : R.mipmap.ic_fav_unfilled);
     }
 }

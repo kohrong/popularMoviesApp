@@ -1,6 +1,5 @@
-package fasttrack.jdeveloper.popularmoviesapp.views;
+package fasttrack.jdeveloper.popularmoviesapp.views.activities;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
@@ -8,6 +7,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,17 +20,17 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import fasttrack.jdeveloper.popularmoviesapp.R;
+import fasttrack.jdeveloper.popularmoviesapp.enums.SpinnerSortCriteria;
 import fasttrack.jdeveloper.popularmoviesapp.listeners.EndlessRecyclerViewScrollListener;
 import fasttrack.jdeveloper.popularmoviesapp.models.Globals;
 import fasttrack.jdeveloper.popularmoviesapp.models.Movie;
 import fasttrack.jdeveloper.popularmoviesapp.models.MovieDBConfiguration;
 import fasttrack.jdeveloper.popularmoviesapp.models.MoviesWrapper;
-import fasttrack.jdeveloper.popularmoviesapp.network.MovieDBApi;
-import fasttrack.jdeveloper.popularmoviesapp.views.activities.MovieDetailActivity;
+import fasttrack.jdeveloper.popularmoviesapp.network.MovieDBReactiveApi;
 import fasttrack.jdeveloper.popularmoviesapp.views.adapters.MoviesAdapter;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener, MoviesAdapter.ListItemClickListener{
 
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private MoviesWrapper moviesWrapper;
     private MoviesAdapter moviesAdapter;
     private EndlessRecyclerViewScrollListener scrollListener;
-    private Boolean popularMovies = true;
+    private int sortCriteria = 0;
     private Spinner spinner;
 
     @Override
@@ -49,10 +49,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState != null) {
-            popularMovies = savedInstanceState.getBoolean(SPINNER_POSITION, true);
+            sortCriteria = savedInstanceState.getInt(SPINNER_POSITION, 0);
         }
 
-        getMovieConfiguration();
+        getMovieConfigurationByRx();
         initRecyclerView();
     }
 
@@ -77,12 +77,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
-        if (popularMovies) {
-            spinner.setSelection(0);
-        }
-        else {
-            spinner.setSelection(1);
-        }
+        spinner.setSelection(sortCriteria);
         return true;
     }
 
@@ -95,86 +90,76 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         scrollListener = new EndlessRecyclerViewScrollListener(gridLayoutManager) {
             @Override
             public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
-                loadNextDataFromApi();
+                getMovies(moviesWrapper.getPage() + 1);
             }
         };
         mMoviesRecylerView.addOnScrollListener(scrollListener);
     }
 
-    private void loadNextDataFromApi() {
-        if (getString(R.string.most_popular).equals(spinner.getSelectedItem())) {
-            getPopularMovies(moviesWrapper.getPage() + 1);
+    private void getMovies(int page) {
+        String currentSortCriteria = (String) spinner.getSelectedItem();
+        if (getString(R.string.most_popular).equals(currentSortCriteria)) {
+            getPopularMoviesByRx(page);
         }
-        else {
-            getBestRatedMovies(moviesWrapper.getPage() + 1);
+        else if (getString(R.string.best_rated).equals(currentSortCriteria)) {
+            getBestRatedMoviesByRx(page);
+        }
+        else if (getString(R.string.favorites).equals(currentSortCriteria)) {
+            getFavoritesMovies();
         }
     }
 
-    private void getMovieConfiguration() {
-        MovieDBApi movieDBApi = new MovieDBApi();
-        Call<MovieDBConfiguration> call = movieDBApi.apiInterface.getConfiguration();
-        call.enqueue(new Callback<MovieDBConfiguration>() {
-            @Override
-            public void onResponse(Call<MovieDBConfiguration> call, Response<MovieDBConfiguration> response) {
-                Globals.IMAGE_BASE_URL = response.body().getImages().getBase_url();
-                Globals.IMAGE_POSTER_SIZE = response.body().getImages().getPoster_sizes().get(2);
-            }
-
-            @Override
-            public void onFailure(Call<MovieDBConfiguration> call, Throwable t) {
-
-            }
-        });
+    private void getMovieConfigurationByRx() {
+        MovieDBReactiveApi movieDBReactiveApi = new MovieDBReactiveApi();
+        Observable<MovieDBConfiguration> configurationObservable = movieDBReactiveApi.apiInterface.getConfiguration();
+        configurationObservable.subscribeOn(Schedulers.io())
+                .subscribe(configuration -> {
+                    Log.d("TEST_RX", configuration.getImages().getBase_url());
+                    setConfiguration(configuration);
+                });
     }
 
-    private void getPopularMovies(final int page) {
+    private void setConfiguration(MovieDBConfiguration configuration) {
+        Globals.IMAGE_BASE_URL = configuration.getImages().getBase_url();
+        Globals.IMAGE_POSTER_SIZE = configuration.getImages().getPoster_sizes().get(2);
+    }
+
+    private void getPopularMoviesByRx(final int page) {
         if (Globals.IMAGE_POSTER_SIZE == null || Globals.IMAGE_POSTER_SIZE.isEmpty()) {
-            getMovieConfiguration();
+            getMovieConfigurationByRx();
         }
-        final MovieDBApi movieDBApi = new MovieDBApi();
-        Call<MoviesWrapper> call = movieDBApi.apiInterface.getPopularMovies(page);
-        call.enqueue(new Callback<MoviesWrapper>() {
-            @Override
-            public void onResponse(Call<MoviesWrapper> call, Response<MoviesWrapper> response) {
-                if (response.isSuccessful()) {
-                    moviesWrapper = response.body();
-                    updateMovieList(page);
-                    popularMovies = true;
-                }
-            }
 
-            @Override
-            public void onFailure(Call<MoviesWrapper> call, Throwable t) {
-                if (t instanceof UnknownHostException) {
-                    showErrorNetworkDialog();
-                }
-            }
-        });
+        MovieDBReactiveApi movieDBReactiveApi = new MovieDBReactiveApi();
+        Observable<MoviesWrapper> moviesWrapperObservable = movieDBReactiveApi.apiInterface.getPopularMovies(page);
+        moviesWrapperSubscriber(moviesWrapperObservable, page, SpinnerSortCriteria.MOST_POPULAR);
     }
 
-    private void getBestRatedMovies(final int page) {
+    private void getBestRatedMoviesByRx(final int page) {
         if (Globals.IMAGE_POSTER_SIZE == null || Globals.IMAGE_POSTER_SIZE.isEmpty()) {
-            getMovieConfiguration();
+            getMovieConfigurationByRx();
         }
-        final MovieDBApi movieDBApi = new MovieDBApi();
-        Call<MoviesWrapper> call = movieDBApi.apiInterface.getBestRatedMovies(page);
-        call.enqueue(new Callback<MoviesWrapper>() {
-            @Override
-            public void onResponse(Call<MoviesWrapper> call, Response<MoviesWrapper> response) {
-                if (response.isSuccessful()) {
-                    moviesWrapper = response.body();
-                    updateMovieList(page);
-                    popularMovies = false;
-                }
-            }
 
-            @Override
-            public void onFailure(Call<MoviesWrapper> call, Throwable t) {
-                if (t instanceof UnknownHostException) {
-                    showErrorNetworkDialog();
-                }
-            }
-        });
+        MovieDBReactiveApi movieDBReactiveApi = new MovieDBReactiveApi();
+        Observable<MoviesWrapper> moviesWrapperObservable = movieDBReactiveApi.apiInterface.getBestRatedMovies(page);
+        moviesWrapperSubscriber(moviesWrapperObservable, page, SpinnerSortCriteria.BEST_RATED);
+    }
+
+    private void getFavoritesMovies() {
+        //TODO get favorites movies from the database via content provider and update the UI
+    }
+
+    private void moviesWrapperSubscriber(Observable<MoviesWrapper> observable, final int page, int sortCriteria) {
+        observable.subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(moviesWrapper -> {
+                    this.moviesWrapper = moviesWrapper;
+                    updateMovieList(page);
+                    this.sortCriteria = sortCriteria;
+                }, error -> {
+                    if (error instanceof UnknownHostException) {
+                        showErrorNetworkDialog();
+                    }
+                });
     }
 
     private void showErrorNetworkDialog() {
@@ -183,26 +168,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         builder.setTitle(getString(R.string.no_internet));
         builder.setMessage(getString(R.string.no_internet_body));
 
-        builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                finish();
-            }
+        builder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
+            dialog.dismiss();
+            finish();
         });
 
-        builder.setPositiveButton(getString(R.string.retry), new DialogInterface.OnClickListener(){
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-                dialog.dismiss();
-                if (getString(R.string.most_popular).equals(spinner.getSelectedItem())) {
-                    getPopularMovies(1);
-                }
-                else {
-                    getBestRatedMovies(1);
-                }
-            }
+        builder.setPositiveButton(getString(R.string.retry), (dialog, which) -> {
+            dialog.dismiss();
+            getMovies(1);
         });
         AlertDialog dialog = builder.create(); // calling builder.create after adding buttons
         dialog.show();
@@ -223,12 +196,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        if (getString(R.string.most_popular).equals(adapterView.getItemAtPosition(i))) {
-            getPopularMovies(1);
-        }
-        else {
-            getBestRatedMovies(1);
-        }
+        getMovies(1);
     }
 
     @Override
