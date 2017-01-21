@@ -113,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         MovieDBReactiveApi movieDBReactiveApi = new MovieDBReactiveApi();
         Observable<MovieDBConfiguration> configurationObservable = movieDBReactiveApi.apiInterface.getConfiguration();
         configurationObservable.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(configuration -> {
                     Log.d("TEST_RX", configuration.getImages().getBase_url());
                     setConfiguration(configuration);

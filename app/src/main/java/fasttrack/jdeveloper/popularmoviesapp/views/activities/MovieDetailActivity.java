@@ -1,60 +1,70 @@
 package fasttrack.jdeveloper.popularmoviesapp.views.activities;
 
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
-import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import fasttrack.jdeveloper.popularmoviesapp.R;
-import fasttrack.jdeveloper.popularmoviesapp.models.Globals;
 import fasttrack.jdeveloper.popularmoviesapp.models.Movie;
+import fasttrack.jdeveloper.popularmoviesapp.views.fragments.MovieDetailFragment;
+import fasttrack.jdeveloper.popularmoviesapp.views.fragments.MovieReviewsFragment;
+import fasttrack.jdeveloper.popularmoviesapp.views.fragments.MovieTrailersFragment;
 
 public class MovieDetailActivity extends AppCompatActivity {
 
+    /**
+     * The number of pages (wizard steps) to show in this demo.
+     */
+    private static final int NUM_PAGES = 3;
+
+    /**
+     * The pager widget, which handles animation and allows swiping horizontally to access previous
+     * and next wizard steps.
+     */
+    private ViewPager mPager;
+
+    /**
+     * The pager adapter, which provides the pages to the view pager widget.
+     */
+    private PagerAdapter mPagerAdapter;
+    private TabLayout tabLayout;
+    private Toolbar toolbar;
+
     private static final String MOVIE = "MOVIE";
     private Movie movie;
-    @BindView(R.id.tv_movie_title) TextView title;
-    @BindView(R.id.tv_movie_average) TextView average;
-    @BindView(R.id.tv_movie_release_date) TextView releaseDate;
-    @BindView(R.id.tv_movie_synopsis) TextView synopsis;
-    @BindView(R.id.iv_movie_poster) ImageView poster;
     private Boolean isFavoriteMovie = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_detail);
-        ButterKnife.bind(this);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             movie = getIntent().getParcelableExtra(MOVIE);
         }
 
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // Instantiate a ViewPager and a PagerAdapter.
+        mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
+        mPager = (ViewPager) findViewById(R.id.pager);
+        mPager.setAdapter(mPagerAdapter);
+
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.setupWithViewPager(mPager);
+
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        title.setText(movie.getOriginal_title());
-        average.setText(String.valueOf(movie.getVote_average()));
-        releaseDate.setText(movie.getRelease_date());
-        synopsis.setText(movie.getOverview());
-
-        if (movie.getPoster_path() != null) {
-            String url = Globals.IMAGE_BASE_URL + "/" + Globals.IMAGE_POSTER_SIZE + movie.getPoster_path();
-
-            Picasso.with(this).load(url)
-                    .fit()
-                    .centerInside()
-                    .placeholder(R.drawable.rectangle)
-                    .error(R.drawable.rectangle)
-                    .into(poster);
-        }
     }
 
     @Override
@@ -90,5 +100,62 @@ public class MovieDetailActivity extends AppCompatActivity {
 
     private void setFavoriteIcon(MenuItem item) {
         item.setIcon(isFavoriteMovie ? R.mipmap.ic_fav_filled : R.mipmap.ic_fav_unfilled);
+    }
+
+    /**
+     * A simple pager adapter that represents 5 ScreenSlidePageFragment objects, in
+     * sequence.
+     */
+    private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
+
+        private MovieDetailFragment movieDetailFragment;
+        private MovieTrailersFragment movieTrailersFragment;
+        private MovieReviewsFragment movieReviewsFragment;
+
+        public ScreenSlidePagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+                case 0:
+                    if (movieDetailFragment == null) {
+                        movieDetailFragment = MovieDetailFragment.newInstance(movie);
+                    }
+                    return movieDetailFragment;
+                case 1:
+                    if (movieTrailersFragment == null) {
+                        movieTrailersFragment = MovieTrailersFragment.newInstance(movie.getId().toString());
+                    }
+                    return movieTrailersFragment;
+                case 2:
+                    if (movieReviewsFragment == null) {
+                        movieReviewsFragment = MovieReviewsFragment.newInstance(null, null);
+                    }
+                    return movieReviewsFragment;
+            }
+
+            return null;
+        }
+
+        @Override
+        public int getCount() {
+            return NUM_PAGES;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
+                case 0:
+                    return getString(R.string.movie);
+                case 1:
+                    return getString(R.string.trailers);
+                case 2:
+                    return getString(R.string.reviews);
+            }
+
+            return null;
+        }
     }
 }

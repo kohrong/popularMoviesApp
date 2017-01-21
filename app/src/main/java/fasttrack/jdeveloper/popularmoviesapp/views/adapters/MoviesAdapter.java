@@ -60,11 +60,13 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
 
     class MoviesViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        @BindView(R.id.iv_movie_poster) ImageView moviePoster;
+        //@BindView(R.id.iv_movie_poster) ImageView moviePoster;
+        private ImageView moviePoster;
 
         public MoviesViewHolder(View itemView) {
             super(itemView);
-            ButterKnife.bind(this, itemView);
+            //ButterKnife.bind(this, itemView);
+            moviePoster = (ImageView) itemView.findViewById(R.id.iv_movie_poster);
             itemView.setOnClickListener(this);
         }
 

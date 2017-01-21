@@ -2,6 +2,7 @@ package fasttrack.jdeveloper.popularmoviesapp.network;
 
 import fasttrack.jdeveloper.popularmoviesapp.models.MovieDBConfiguration;
 import fasttrack.jdeveloper.popularmoviesapp.models.MoviesWrapper;
+import fasttrack.jdeveloper.popularmoviesapp.models.TrailersWrapper;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -9,6 +10,7 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 import rx.Observable;
 
@@ -58,5 +60,8 @@ public class MovieDBReactiveApi {
 
         @GET("movie/top_rated")
         Observable<MoviesWrapper> getBestRatedMovies(@Query("page") Integer page);
+
+        @GET("movie/{movie_id}/videos")
+        Observable<TrailersWrapper> getTrailers(@Path("movie_id") String movieId);
     }
 }
