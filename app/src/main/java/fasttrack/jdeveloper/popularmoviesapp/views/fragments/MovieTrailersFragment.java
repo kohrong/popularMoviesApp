@@ -32,7 +32,6 @@ public class MovieTrailersFragment extends Fragment implements TrailersAdapter.L
     private static final String MOVIE_ID = "MOVIE_ID";
     private static final String YOUTUBE_ORIGIN = "YouTube";
 
-    // TODO: Rename and change types of parameters
     private String movieId;
     private TrailersAdapter trailersAdapter;
     private RecyclerView trailersRecyclerView;

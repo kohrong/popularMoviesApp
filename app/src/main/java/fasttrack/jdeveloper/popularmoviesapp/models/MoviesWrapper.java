@@ -12,6 +12,9 @@ public class MoviesWrapper {
     private Integer total_results;
     private Integer total_pages;
 
+    public MoviesWrapper() {
+    }
+
     public MoviesWrapper(int page, ArrayList<Movie> results, Integer total_results, Integer total_pages) {
         this.page = page;
         this.results = results;

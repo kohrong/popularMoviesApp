@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bluejamesbond.text.DocumentView;
 import com.squareup.picasso.Picasso;
 
 import fasttrack.jdeveloper.popularmoviesapp.R;
@@ -23,7 +24,7 @@ public class MovieDetailFragment extends Fragment {
     private TextView title;
     private TextView average;
     private TextView releaseDate;
-    private TextView synopsis;
+    private DocumentView synopsis;
     private ImageView poster;
 
     public MovieDetailFragment() {
@@ -65,7 +66,7 @@ public class MovieDetailFragment extends Fragment {
         average.setText(String.valueOf(movie.getVote_average()));
         releaseDate = (TextView) view.findViewById(R.id.tv_movie_release_date);
         releaseDate.setText(movie.getRelease_date());
-        synopsis = (TextView) view.findViewById(R.id.tv_movie_synopsis);
+        synopsis = (DocumentView) view.findViewById(R.id.tv_movie_synopsis);
         synopsis.setText(movie.getOverview());
 
         if (movie.getPoster_path() != null) {

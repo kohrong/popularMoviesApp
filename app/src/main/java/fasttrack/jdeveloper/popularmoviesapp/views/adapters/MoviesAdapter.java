@@ -11,8 +11,6 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import fasttrack.jdeveloper.popularmoviesapp.R;
 import fasttrack.jdeveloper.popularmoviesapp.models.Globals;
 import fasttrack.jdeveloper.popularmoviesapp.models.Movie;

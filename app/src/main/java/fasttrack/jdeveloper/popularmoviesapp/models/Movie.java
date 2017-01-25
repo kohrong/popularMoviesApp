@@ -27,6 +27,9 @@ public class Movie implements Parcelable {
     private Boolean video;
     private Double vote_average;
 
+    public Movie() {
+    }
+
     public Movie(String poster_path, Boolean adult, String overview, String release_date, ArrayList<Integer> genre_ids, Integer id, String original_title, String original_language, String title, String backdrop_path, Double popularity, Integer vote_count, Boolean video, Double vote_average) {
         this.poster_path = poster_path;
         this.adult = adult;

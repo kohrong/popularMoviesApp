@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/activity_horizontal_margin"
+    android:layout_marginBottom="2dp"
+    android:background="@color/dark_grey">
+
+    <TextView
+        android:id="@+id/tv_review_author"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/Base.TextAppearance.AppCompat.Headline"
+        android:gravity="center"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"/>
+
+    <com.bluejamesbond.text.DocumentView
+        android:id="@+id/tv_review_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/Base.TextAppearance.AppCompat.Body1"
+        app:documentView_textAlignment="justified"
+        app:documentView_textColor="@color/white"/>
+</LinearLayout>

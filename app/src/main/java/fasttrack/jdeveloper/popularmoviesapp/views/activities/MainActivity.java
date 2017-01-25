@@ -1,6 +1,7 @@
 package fasttrack.jdeveloper.popularmoviesapp.views.activities;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AlertDialog;
@@ -20,6 +21,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import fasttrack.jdeveloper.popularmoviesapp.R;
+import fasttrack.jdeveloper.popularmoviesapp.data.MovieContract;
 import fasttrack.jdeveloper.popularmoviesapp.enums.SpinnerSortCriteria;
 import fasttrack.jdeveloper.popularmoviesapp.listeners.EndlessRecyclerViewScrollListener;
 import fasttrack.jdeveloper.popularmoviesapp.models.Globals;
@@ -37,11 +39,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String SPINNER_POSITION = "SPINNER_POSITION";
     private static final String MOVIE = "MOVIE";
     private ArrayList<Movie> movies = new ArrayList<>();
-    private MoviesWrapper moviesWrapper;
+    private MoviesWrapper moviesWrapper = new MoviesWrapper();
     private MoviesAdapter moviesAdapter;
     private EndlessRecyclerViewScrollListener scrollListener;
     private int sortCriteria = 0;
     private Spinner spinner;
+    private RecyclerView mMoviesRecylerView;
+    private StaggeredGridLayoutManager gridLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (spinner != null)
-            outState.putBoolean(SPINNER_POSITION, spinner.getSelectedItemPosition() == 0);
+            outState.putInt(SPINNER_POSITION, spinner.getSelectedItemPosition());
     }
 
     @Override
@@ -82,8 +86,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void initRecyclerView() {
-        RecyclerView mMoviesRecylerView = (RecyclerView) findViewById(R.id.rv_movies);
-        StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
+        mMoviesRecylerView = (RecyclerView) findViewById(R.id.rv_movies);
+        gridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
         mMoviesRecylerView.setLayoutManager(gridLayoutManager);
         moviesAdapter = new MoviesAdapter(movies, this);
         mMoviesRecylerView.setAdapter(moviesAdapter);
@@ -146,7 +150,36 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void getFavoritesMovies() {
-        //TODO get favorites movies from the database via content provider and update the UI
+        Cursor cursor = getContentResolver().query(MovieContract.FavoriteMovieEntry.CONTENT_URI,
+                null,
+                null,
+                null,
+                MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_RATING);
+
+        ArrayList<Movie> favoriteMovies = new ArrayList<>();
+        try {
+            while (cursor.moveToNext()) {
+                favoriteMovies.add(populateMovie(cursor));
+            }
+        } finally {
+            movies.clear();
+            movies = favoriteMovies;
+            mMoviesRecylerView.post(() -> moviesAdapter.setMovies(movies));
+            scrollListener.resetState();
+            cursor.close();
+        }
+    }
+
+    private Movie populateMovie(Cursor cursor) {
+        Movie movie = new Movie();
+        movie.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_TITLE)));
+        movie.setId(cursor.getInt(cursor.getColumnIndexOrThrow(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_ID)));
+        movie.setOverview(cursor.getString(cursor.getColumnIndexOrThrow(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_SYNOPSIS)));
+        movie.setVote_average(cursor.getDouble(cursor.getColumnIndexOrThrow(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_RATING)));
+        movie.setRelease_date(cursor.getString(cursor.getColumnIndexOrThrow(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_RELEASE_DATE)));
+        movie.setPoster_path(cursor.getString(cursor.getColumnIndexOrThrow(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_POSTER_PATH)));
+
+        return movie;
     }
 
     private void moviesWrapperSubscriber(Observable<MoviesWrapper> observable, final int page, int sortCriteria) {
@@ -154,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(moviesWrapper -> {
                     this.moviesWrapper = moviesWrapper;
-                    updateMovieList(page);
+                    updateMovieListFromWebService(page);
                     this.sortCriteria = sortCriteria;
                 }, error -> {
                     if (error instanceof UnknownHostException) {
@@ -183,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         Toast.makeText(this, getString(R.string.network_unavailable), Toast.LENGTH_SHORT).show();
     }
 
-    private void updateMovieList(int page) {
+    private void updateMovieListFromWebService(int page) {
         if (page == 1) {
             movies.clear();
             movies = moviesWrapper.getResults();

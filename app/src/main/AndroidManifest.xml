@@ -20,6 +20,11 @@
         <activity
             android:name=".views.activities.MovieDetailActivity"
             android:theme="@style/NoActionBar"/>
+        
+        <provider
+            android:authorities="fasttrack.jdeveloper.popularmoviesapp"
+            android:name=".data.MovieContentProvider"
+            android:exported="false" />
     </application>
 
 </manifest>

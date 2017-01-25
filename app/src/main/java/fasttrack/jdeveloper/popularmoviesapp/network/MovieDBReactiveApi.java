@@ -2,6 +2,7 @@ package fasttrack.jdeveloper.popularmoviesapp.network;
 
 import fasttrack.jdeveloper.popularmoviesapp.models.MovieDBConfiguration;
 import fasttrack.jdeveloper.popularmoviesapp.models.MoviesWrapper;
+import fasttrack.jdeveloper.popularmoviesapp.models.ReviewsWrapper;
 import fasttrack.jdeveloper.popularmoviesapp.models.TrailersWrapper;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -63,5 +64,8 @@ public class MovieDBReactiveApi {
 
         @GET("movie/{movie_id}/videos")
         Observable<TrailersWrapper> getTrailers(@Path("movie_id") String movieId);
+
+        @GET("movie/{movie_id}/reviews")
+        Observable<ReviewsWrapper> getReviews(@Path("movie_id") String movieId, @Query("page") Integer page);
     }
 }
