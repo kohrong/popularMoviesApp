@@ -150,6 +150,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void getFavoritesMovies() {
+        Observable<Boolean> cursorObservable = Observable.just(getFavoritesMoviesFromDB())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    private Boolean getFavoritesMoviesFromDB() {
         Cursor cursor = getContentResolver().query(MovieContract.FavoriteMovieEntry.CONTENT_URI,
                 null,
                 null,
@@ -167,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             mMoviesRecylerView.post(() -> moviesAdapter.setMovies(movies));
             scrollListener.resetState();
             cursor.close();
+            return true;
         }
     }
 
@@ -243,5 +250,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         Intent intent = new Intent(this, MovieDetailActivity.class);
         intent.putExtra(MOVIE, movies.get(position));
         startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (spinner != null) {
+            String currentSortCriteria = (String) spinner.getSelectedItem();
+            if (getString(R.string.favorites).equals(currentSortCriteria)) {
+                getFavoritesMovies();
+            }
+        }
     }
 }

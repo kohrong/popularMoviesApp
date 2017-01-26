@@ -2,13 +2,12 @@ package fasttrack.jdeveloper.popularmoviesapp.views.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -91,7 +90,7 @@ public class MovieReviewsFragment extends Fragment {
                     updateReviewList(page);
                 }, error -> {
                     if (error instanceof UnknownHostException) {
-                        showErrorNetworkDialog();
+                        Log.d("NETWORK", error.getMessage());
                     }
                 });
     }
@@ -106,24 +105,5 @@ public class MovieReviewsFragment extends Fragment {
             reviews.addAll(reviewsWrapper.getResults());
         }
         reviewsAdapter.updateReviews(reviews);
-    }
-
-    private void showErrorNetworkDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setCancelable(false);
-        builder.setTitle(getString(R.string.no_internet));
-        builder.setMessage(getString(R.string.no_internet_body));
-
-        builder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
-            dialog.dismiss();
-        });
-
-        builder.setPositiveButton(getString(R.string.retry), (dialog, which) -> {
-            dialog.dismiss();
-            getReviews(1);
-        });
-        AlertDialog dialog = builder.create(); // calling builder.create after adding buttons
-        dialog.show();
-        Toast.makeText(getContext(), getString(R.string.network_unavailable), Toast.LENGTH_SHORT).show();
     }
 }

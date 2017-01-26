@@ -61,7 +61,7 @@ public class MovieDetailFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_movie_detail, container, false);
 
         title = (TextView) view.findViewById(R.id.tv_movie_title);
-        title.setText(movie.getOriginal_title());
+        title.setText(movie.getTitle());
         average = (TextView) view.findViewById(R.id.tv_movie_average);
         average.setText(String.valueOf(movie.getVote_average()));
         releaseDate = (TextView) view.findViewById(R.id.tv_movie_release_date);

@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
@@ -102,11 +103,15 @@ public class MovieContentProvider extends ContentProvider {
 
         switch (match) {
             case FAVORITES:
-                long id = db.insert(TABLE_NAME, null, contentValues);
-                if ( id > 0 ) {
-                    returnUri = ContentUris.withAppendedId(MovieContract.FavoriteMovieEntry.CONTENT_URI, id);
-                } else {
-                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                try {
+                    long id = db.insert(TABLE_NAME, null, contentValues);
+                    if ( id > 0 ) {
+                        returnUri = ContentUris.withAppendedId(MovieContract.FavoriteMovieEntry.CONTENT_URI, id);
+                    } else {
+                        returnUri = null;
+                    }
+                } catch (SQLiteConstraintException e) {
+                    returnUri = null;
                 }
                 break;
             default:
@@ -120,7 +125,25 @@ public class MovieContentProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String s, String[] strings) {
-        return 0;
+        final SQLiteDatabase db = movieDbHelper.getWritableDatabase();
+
+        int match = sUriMatcher.match(uri);
+        int tasksDeleted;
+
+        switch (match) {
+            case FAVORITE_WITH_ID:
+                String id = uri.getPathSegments().get(1);
+                tasksDeleted = db.delete(TABLE_NAME, MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_ID + "=?", new String[]{id});
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri: " + uri);
+        }
+
+        if (tasksDeleted != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        return tasksDeleted;
     }
 
     @Override

@@ -23,6 +23,7 @@ import fasttrack.jdeveloper.popularmoviesapp.views.fragments.MovieDetailFragment
 import fasttrack.jdeveloper.popularmoviesapp.views.fragments.MovieReviewsFragment;
 import fasttrack.jdeveloper.popularmoviesapp.views.fragments.MovieTrailersFragment;
 import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class MovieDetailActivity extends AppCompatActivity {
@@ -68,31 +69,39 @@ public class MovieDetailActivity extends AppCompatActivity {
                 onBackPressed();
                 break;
             case R.id.action_favorite:
-                Observable<Boolean> insertFavoriteObservable = Observable.just(onClickFavoriteMovie()).subscribeOn(Schedulers.io());
-                toggleFavoriteMovie(item);
+                Observable<Boolean> insertFavoriteObservable = Observable.just(onClickFavoriteMovie(item))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread());
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private Boolean onClickFavoriteMovie() {
+    private Boolean onClickFavoriteMovie(MenuItem item) {
         if (isFavoriteMovie) {
-            //TODO remove movie from favorites
+            Uri uri = MovieContract.FavoriteMovieEntry.CONTENT_URI;
+            uri = uri.buildUpon().appendPath(String.valueOf(movie.getId())).build();
+            int rowsDeleted = getContentResolver().delete(uri, MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_ID, null);
+            if (rowsDeleted > 0) {
+                toggleFavoriteMovie(item);
+            }
         }
         else {
             ContentValues contentValues = new ContentValues();
             contentValues.put(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_ID, movie.getId());
-            contentValues.put(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_TITLE, movie.getOriginal_title());
+            contentValues.put(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_TITLE, movie.getTitle());
             contentValues.put(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_RATING, movie.getVote_average());
             contentValues.put(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_RELEASE_DATE, movie.getRelease_date());
             contentValues.put(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_SYNOPSIS, movie.getOverview());
             contentValues.put(MovieContract.FavoriteMovieEntry.COLUMN_MOVIE_POSTER_PATH, movie.getPoster_path());
             Uri uri = getContentResolver().insert(MovieContract.FavoriteMovieEntry.CONTENT_URI, contentValues);
 
-            return true;
+            if (uri != null) {
+                toggleFavoriteMovie(item);
+            }
         }
 
-        return false;
+        return true;
     }
 
     private void toggleFavoriteMovie(MenuItem item) {
